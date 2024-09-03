@@ -7,17 +7,31 @@ output_type: generate_until
 training_split: train
 validation_split: validation
 test_split: test
-doc_to_text: "{{ question.strip() }}{% for i in range(choices.text|length) %}\n{{ ['A', 'B', 'C', 'D', 'E'][i] }}. {{ choices.text[i] }}{% endfor %}\nAnswer:"
+doc_to_text: !function utils.doc_to_text
 doc_to_target: "{{answerKey}}"
 should_decontaminate: true
 doc_to_decontamination_query: "Question: {{question}}\nAnswer:"
+filter_list:
+  - name: "strict-match"
+    filter:
+      - function: "regex"
+        group_select: -1
+        regex_pattern: 'best answer is ([A-Z])'
+      - function: "take_first"
 generation_kwargs:
   until:
     - "</s>"
     - "\n"
+    - "<|im_end|>"
+  do_sample: false
+  temperature: 0
+  max_gen_toks: 100
+num_fewshot: 0
 metric_list:
   - metric: exact_match
     aggregation: mean
     higher_is_better: true
+    ignore_case: true
+    ignore_punctuation: true
 metadata:
   version: 1.0
